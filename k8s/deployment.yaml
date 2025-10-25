@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-autentificacion
+  namespace: ambulancia-system
+  labels:
+    app: ms-autentificacion
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ms-autentificacion
+  template:
+    metadata:
+      labels:
+        app: ms-autentificacion
+        version: v1
+    spec:
+      containers:
+      - name: ms-autentificacion
+        image: ms-autentificacion:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        - containerPort: 9000
+          name: php-fpm
+          protocol: TCP
+
+        env:
+        - name: APP_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: ms-autentificacion-config
+              key: APP_ENV
+        - name: APP_DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: ms-autentificacion-config
+              key: APP_DEBUG
+        - name: APP_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ms-autentificacion-config
+              key: APP_URL
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: ms-autentificacion-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: ms-autentificacion-config
+              key: DB_PORT
+        - name: DB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: ms-autentificacion-config
+              key: DB_DATABASE
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ms-autentificacion-secrets
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ms-autentificacion-secrets
+              key: DB_PASSWORD
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+        volumeMounts:
+        - name: storage
+          mountPath: /app/storage
+        - name: logs
+          mountPath: /app/storage/logs
+
+      volumes:
+      - name: storage
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+
+      imagePullSecrets:
+      - name: docker-registry-secret
