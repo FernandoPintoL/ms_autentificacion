@@ -1,42 +1,42 @@
-# MS Autenticación - API GraphQL Documentation
+# MS Autenticación - Documentación API GraphQL
 
-## Overview
+## Descripción General
 
-MS Autenticación is a Laravel-based microservice that handles user authentication, role-based access control (RBAC), and permission management for the ambulance dispatch system. It uses:
+MS Autenticación es un microservicio basado en Laravel que maneja autenticación de usuarios, control de acceso basado en roles (RBAC) y gestión de permisos para el sistema de despacho de ambulancias. Utiliza:
 
-- **GraphQL** for API operations
-- **Laravel Sanctum** for token-based API authentication
-- **Spatie Laravel Permission** for role and permission management
-- **SQL Server** for data persistence (with special handling for ODBC)
+- **GraphQL** para operaciones de API
+- **Laravel Sanctum** para autenticación de API basada en tokens
+- **Spatie Laravel Permission** para gestión de roles y permisos
+- **SQL Server** para persistencia de datos (con manejo especial para ODBC)
 
-## Architecture
+## Arquitectura
 
-### Authentication Flow
+### Flujo de Autenticación
 
-1. User sends credentials (email/password) to `login` mutation
-2. AuthService validates credentials and user active status
-3. Sanctum creates a personal access token with user's permissions
-4. Token is returned to client for subsequent requests
-5. Client includes token in Authorization header: `Bearer <token>`
-6. AttemptAuthentication middleware validates token on each request
+1. El usuario envía credenciales (email/contraseña) a la mutación `login`
+2. AuthService valida credenciales y estado activo del usuario
+3. Sanctum crea un token de acceso personal con los permisos del usuario
+4. El token se devuelve al cliente para solicitudes posteriores
+5. El cliente incluye el token en el encabezado Autorización: `Bearer <token>`
+6. El middleware AttemptAuthentication valida el token en cada solicitud
 
-### Role and Permission Structure
+### Estructura de Roles y Permisos
 
 **Roles:**
-- `admin` - Full system access
-- `paramedic` - Field personnel (patients, ambulances, dispatches)
-- `dispatcher` - Dispatch center operations
-- `hospital` - Hospital staff (patient viewing/editing)
-- `doctor` - Medical personnel
-- `system` - Automated systems (n8n, etc.)
+- `admin` - Acceso completo al sistema
+- `paramedic` - Personal de campo (pacientes, ambulancias, despachos)
+- `dispatcher` - Operaciones del centro de despacho
+- `hospital` - Personal del hospital (visualización/edición de pacientes)
+- `doctor` - Personal médico
+- `system` - Sistemas automatizados (n8n, etc.)
 
-**Permissions:** 18 granular permissions across users, ambulances, dispatches, patients, reports, and settings management.
+**Permisos:** 18 permisos granulares en gestión de usuarios, ambulancias, despachos, pacientes, reportes y configuración.
 
 ---
 
-## GraphQL Queries
+## Consultas GraphQL
 
-### 1. Get Current User
+### 1. Obtener Usuario Actual
 
 ```graphql
 query Me {
@@ -58,14 +58,14 @@ query Me {
 }
 ```
 
-**Response:**
+**Respuesta:**
 ```json
 {
   "data": {
     "me": {
       "id": "1",
-      "name": "John Paramedic",
-      "email": "john@ambulancia.local",
+      "name": "Juan Paramédico",
+      "email": "juan@ambulancia.local",
       "phone": "+34612345678",
       "status": "active",
       "roles": [
@@ -89,7 +89,7 @@ query Me {
 }
 ```
 
-### 2. Get User by ID
+### 2. Obtener Usuario por ID
 
 ```graphql
 query GetUser($id: ID!) {
@@ -112,7 +112,7 @@ query GetUser($id: ID!) {
 }
 ```
 
-### 3. List All Users (Paginated)
+### 3. Listar Todos los Usuarios (Paginado)
 
 ```graphql
 query ListUsers($first: Int!, $page: Int!) {
@@ -143,7 +143,7 @@ query ListUsers($first: Int!, $page: Int!) {
 }
 ```
 
-### 4. Get All Roles
+### 4. Obtener Todos los Roles
 
 ```graphql
 query GetRoles {
@@ -159,7 +159,7 @@ query GetRoles {
 }
 ```
 
-### 5. Get All Permissions
+### 5. Obtener Todos los Permisos
 
 ```graphql
 query GetPermissions {
@@ -171,7 +171,7 @@ query GetPermissions {
 }
 ```
 
-### 6. Get Current User's Permissions
+### 6. Obtener Permisos del Usuario Actual
 
 ```graphql
 query GetMyPermissions {
@@ -183,7 +183,7 @@ query GetMyPermissions {
 }
 ```
 
-### 7. Validate Token
+### 7. Validar Token
 
 ```graphql
 query ValidateToken($token: String!) {
@@ -210,9 +210,9 @@ query ValidateToken($token: String!) {
 
 ---
 
-## GraphQL Mutations
+## Mutaciones GraphQL
 
-### 1. User Login
+### 1. Iniciar Sesión de Usuario
 
 ```graphql
 mutation Login($email: String!, $password: String!) {
@@ -245,7 +245,7 @@ mutation Login($email: String!, $password: String!) {
 }
 ```
 
-**Response:**
+**Respuesta:**
 ```json
 {
   "data": {
@@ -257,7 +257,7 @@ mutation Login($email: String!, $password: String!) {
       "expiresAt": "2025-10-26T14:30:00.000000Z",
       "user": {
         "id": "2",
-        "name": "John Paramedic",
+        "name": "Juan Paramédico",
         "email": "paramedic@ambulancia.local",
         "roles": [
           {
@@ -278,7 +278,7 @@ mutation Login($email: String!, $password: String!) {
 }
 ```
 
-### 2. WhatsApp Login (Auto-Registration)
+### 2. Iniciar Sesión por WhatsApp (Auto-Registro)
 
 ```graphql
 mutation LoginWhatsApp($phone: String!) {
@@ -303,9 +303,9 @@ mutation LoginWhatsApp($phone: String!) {
 }
 ```
 
-**Note:** Phone numbers are automatically formatted to Spanish format (+34) if not provided.
+**Nota:** Los números de teléfono se formatean automáticamente al formato español (+34) si no se proporcionan.
 
-### 3. User Logout
+### 3. Cerrar Sesión del Usuario
 
 ```graphql
 mutation Logout {
@@ -316,12 +316,12 @@ mutation Logout {
 }
 ```
 
-**Headers:**
+**Encabezados:**
 ```
 Authorization: Bearer <token>
 ```
 
-### 4. Refresh Token
+### 4. Refrescar Token
 
 ```graphql
 mutation RefreshToken {
@@ -336,12 +336,12 @@ mutation RefreshToken {
 }
 ```
 
-**Headers:**
+**Encabezados:**
 ```
 Authorization: Bearer <token>
 ```
 
-### 5. Create User (Admin Only)
+### 5. Crear Usuario (Solo Admin)
 
 ```graphql
 mutation CreateUser(
@@ -374,15 +374,15 @@ mutation CreateUser(
 **Variables:**
 ```json
 {
-  "name": "Jane Doctor",
-  "email": "jane.doctor@hospital.local",
+  "name": "Juana Doctora",
+  "email": "juana.doctora@hospital.local",
   "phone": "+34699999999",
-  "password": "SecurePassword123!",
+  "password": "ContraseñaSegura123!",
   "role": "doctor"
 }
 ```
 
-### 6. Update User
+### 6. Actualizar Usuario
 
 ```graphql
 mutation UpdateUser(
@@ -416,12 +416,12 @@ mutation UpdateUser(
 ```json
 {
   "id": "2",
-  "name": "Updated Name",
+  "name": "Nombre Actualizado",
   "phone": "+34612345680"
 }
 ```
 
-### 7. Delete User (Admin Only)
+### 7. Eliminar Usuario (Solo Admin)
 
 ```graphql
 mutation DeleteUser($id: ID!) {
@@ -439,7 +439,7 @@ mutation DeleteUser($id: ID!) {
 }
 ```
 
-### 8. Assign Role to User (Admin Only)
+### 8. Asignar Rol a Usuario (Solo Admin)
 
 ```graphql
 mutation AssignRole($userId: ID!, $role: String!) {
@@ -464,7 +464,7 @@ mutation AssignRole($userId: ID!, $role: String!) {
 }
 ```
 
-### 9. Remove Role from User (Admin Only)
+### 9. Remover Rol de Usuario (Solo Admin)
 
 ```graphql
 mutation RemoveRole($userId: ID!, $role: String!) {
@@ -491,68 +491,68 @@ mutation RemoveRole($userId: ID!, $role: String!) {
 
 ---
 
-## Setup and Installation
+## Configuración e Instalación
 
-### Prerequisites
+### Requisitos Previos
 
 - PHP 8.2+
 - Laravel 12
-- SQL Server or compatible database
+- SQL Server o base de datos compatible
 - Composer
 
-### Installation Steps
+### Pasos de Instalación
 
-1. **Clone and Install Dependencies**
+1. **Clonar e Instalar Dependencias**
    ```bash
    cd ms_autentificacion
    composer install
    ```
 
-2. **Configure Environment**
+2. **Configurar Entorno**
    ```bash
    cp .env.example .env
-   # Edit .env with your database credentials
+   # Editar .env con tus credenciales de base de datos
    ```
 
-3. **Generate Application Key**
+3. **Generar Clave de Aplicación**
    ```bash
    php artisan key:generate
    ```
 
-4. **Run Migrations**
+4. **Ejecutar Migraciones**
    ```bash
    php artisan migrate
    ```
 
-5. **Setup Roles and Permissions**
+5. **Configurar Roles y Permisos**
    ```bash
    php artisan auth:setup
    ```
 
-6. **Create Admin and Test Users**
+6. **Crear Usuario Admin y Usuarios de Prueba**
    ```bash
    php artisan auth:create-admin
    ```
 
-7. **Clear Cache**
+7. **Limpiar Caché**
    ```bash
    php artisan cache:clear
    ```
 
-8. **Start Development Server**
+8. **Iniciar Servidor de Desarrollo**
    ```bash
    php artisan serve
    ```
 
-The GraphQL endpoint will be available at: `http://localhost:8000/graphql`
+El endpoint de GraphQL estará disponible en: `http://localhost:8000/graphql`
 
 ---
 
-## Integration with Other Microservices
+## Integración con Otros Microservicios
 
-### Cross-Microservice Authentication
+### Autenticación Entre Microservicios
 
-To validate tokens from other microservices, use the `validateToken` query:
+Para validar tokens de otros microservicios, utiliza la consulta `validateToken`:
 
 ```graphql
 query ValidateToken($token: String!) {
@@ -570,21 +570,21 @@ query ValidateToken($token: String!) {
 }
 ```
 
-### Token Format
+### Formato de Token
 
-- **Format:** `ID|HexString` (separated by pipe)
-- **Example:** `1|NFP3U4xprX28BRVQg3yFqVvUuumaqfnf38w8ITcpc0a015ff`
-- **Duration:** 24 hours
-- **Revocation:** Revoked on logout or password change
+- **Formato:** `ID|CadenaHex` (separada por barra)
+- **Ejemplo:** `1|NFP3U4xprX28BRVQg3yFqVvUuumaqfnf38w8ITcpc0a015ff`
+- **Duración:** 24 horas
+- **Revocación:** Se revoca al cerrar sesión o cambiar contraseña
 
-### Using Token in Requests
+### Usar Token en Solicitudes
 
-Include in Authorization header:
+Incluir en el encabezado de Autorización:
 ```
 Authorization: Bearer <token>
 ```
 
-### Example Node.js Integration
+### Ejemplo de Integración con Node.js
 
 ```javascript
 const axios = require('axios');
@@ -611,25 +611,25 @@ axios.post('http://ms-auth:8000/graphql',
     }
   }
 ).then(response => {
-  console.log('User:', response.data.data.me);
+  console.log('Usuario:', response.data.data.me);
 });
 ```
 
 ---
 
-## Error Handling
+## Manejo de Errores
 
-### GraphQL Errors
+### Errores de GraphQL
 
-All errors are returned in the standard GraphQL format:
+Todos los errores se devuelven en el formato estándar de GraphQL:
 
 ```json
 {
   "errors": [
     {
-      "message": "User not found",
+      "message": "Usuario no encontrado",
       "extensions": {
-        "debugMessage": "The email provided does not exist in our records",
+        "debugMessage": "El email proporcionado no existe en nuestros registros",
         "file": "app/Services/AuthService.php",
         "line": 25
       }
@@ -638,144 +638,144 @@ All errors are returned in the standard GraphQL format:
 }
 ```
 
-### Common Error Codes
+### Códigos de Error Comunes
 
-| Status | Message | Cause |
+| Estado | Mensaje | Causa |
 |--------|---------|-------|
-| 401 | Unauthenticated | Missing or invalid token |
-| 403 | Unauthorized | Insufficient permissions |
-| 404 | Not Found | User/Role/Permission not found |
-| 422 | Validation Failed | Invalid input parameters |
+| 401 | Sin Autenticación | Falta token o token inválido |
+| 403 | No Autorizado | Permisos insuficientes |
+| 404 | No Encontrado | Usuario/Rol/Permiso no encontrado |
+| 422 | Validación Fallida | Parámetros de entrada inválidos |
 
 ---
 
-## Deployment
+## Despliegue
 
-### Docker Deployment
+### Despliegue con Docker
 
 ```dockerfile
 FROM php:8.2-fpm
 
-# Install dependencies
+# Instalar dependencias
 RUN apt-get update && apt-get install -y \
     composer \
     git \
     libpq-dev \
     mssql-tools
 
-# Copy application
+# Copiar aplicación
 COPY . /app
 WORKDIR /app
 
-# Install PHP dependencies
+# Instalar dependencias de PHP
 RUN composer install --no-dev
 
-# Run migrations
+# Ejecutar migraciones
 CMD php artisan migrate && php artisan serve --host=0.0.0.0
 ```
 
-### Kubernetes Deployment
+### Despliegue en Kubernetes
 
-The service includes Kubernetes manifests:
-- `k8s/deployment.yaml` - 3-10 pod replicas
-- `k8s/service.yaml` - ClusterIP service
-- `k8s/configmap.yaml` - Configuration
-- `k8s/hpa.yaml` - Auto-scaling (70% CPU, 80% Memory)
-- `k8s/ingress.yaml` - HTTPS ingress with cert-manager
+El servicio incluye manifiestos de Kubernetes:
+- `k8s/deployment.yaml` - 3-10 réplicas de pod
+- `k8s/service.yaml` - Servicio ClusterIP
+- `k8s/configmap.yaml` - Configuración
+- `k8s/hpa.yaml` - Auto-escalado (70% CPU, 80% Memoria)
+- `k8s/ingress.yaml` - Ingress HTTPS con cert-manager
 
 ---
 
-## Testing
+## Pruebas
 
-Run the test suite:
+Ejecutar el conjunto de pruebas:
 
 ```bash
-# All tests
+# Todas las pruebas
 php artisan test
 
-# Specific test file
+# Archivo de prueba específico
 php artisan test tests/Feature/GraphQL/AuthenticationTest.php
 
-# With coverage
+# Con cobertura
 php artisan test --coverage
 ```
 
-Test files include:
-- `tests/Feature/GraphQL/AuthenticationTest.php` - Login, logout, token validation
-- `tests/Feature/GraphQL/UserManagementTest.php` - User CRUD and role management
+Los archivos de prueba incluyen:
+- `tests/Feature/GraphQL/AuthenticationTest.php` - Inicio de sesión, cierre de sesión, validación de token
+- `tests/Feature/GraphQL/UserManagementTest.php` - CRUD de usuarios y gestión de roles
 
 ---
 
-## Performance and Security
+## Rendimiento y Seguridad
 
-### Security Features
+### Características de Seguridad
 
-- **Sanctum Tokens**: Secure, revocable API tokens
-- **Password Hashing**: bcrypt with configurable rounds
-- **Rate Limiting**: Throttle requests per IP
-- **CSRF Protection**: Built-in for web routes
-- **SQL Injection Protection**: Parameterized queries and Laravel ORM
+- **Tokens Sanctum**: Tokens de API seguros y revocables
+- **Contraseñas Hasheadas**: bcrypt con rondas configurables
+- **Limitación de Velocidad**: Acelerar solicitudes por IP
+- **Protección CSRF**: Integrada para rutas web
+- **Protección contra Inyección SQL**: Consultas parametrizadas y ORM de Laravel
 
-### Performance Considerations
+### Consideraciones de Rendimiento
 
-- Token validation happens on every request
-- User permissions are cached in token
-- Role and permission relationships use eager loading
-- GraphQL queries are optimized with field resolvers
+- La validación de token ocurre en cada solicitud
+- Los permisos del usuario se cachean en el token
+- Las relaciones de rol y permiso utilizan carga anticipada
+- Las consultas de GraphQL se optimizan con solucionadores de campos
 
-### Production Recommendations
+### Recomendaciones para Producción
 
-1. **Enable HTTPS** - All communication over TLS
-2. **Set SANCTUM_STATEFUL_DOMAINS** - Prevent CSRF
-3. **Configure CORS** - Restrict to known domains
-4. **Use Environment Variables** - Never commit secrets
-5. **Monitor Database** - Watch query performance
-6. **Set Up Logging** - Track authentication events
+1. **Habilitar HTTPS** - Toda comunicación sobre TLS
+2. **Configurar SANCTUM_STATEFUL_DOMAINS** - Prevenir CSRF
+3. **Configurar CORS** - Restringir a dominios conocidos
+4. **Usar Variables de Entorno** - Nunca hacer commit de secretos
+5. **Monitorear Base de Datos** - Observar rendimiento de consultas
+6. **Configurar Registro** - Rastrear eventos de autenticación
 
 ---
 
-## Support and Troubleshooting
+## Soporte y Solución de Problemas
 
-### Common Issues
+### Problemas Comunes
 
 **1. "No role named X for guard Y"**
-- Ensure roles were created with matching guard
-- Run: `php artisan auth:setup`
+- Asegúrate de que los roles se crearon con el guard coincidente
+- Ejecutar: `php artisan auth:setup`
 
-**2. ODBC Timestamp Errors**
-- This service uses raw SQL for timestamp-sensitive operations
-- Not applicable to other databases
+**2. Errores de Timestamp de ODBC**
+- Este servicio utiliza SQL sin formato para operaciones sensibles a timestamp
+- No aplicable a otras bases de datos
 
-**3. Token Not Working**
-- Verify token format: `ID|HexString`
-- Check token hasn't expired (24 hours)
-- Ensure Authorization header format: `Bearer <token>`
+**3. Token No Funciona**
+- Verificar formato de token: `ID|CadenaHex`
+- Verificar que el token no haya expirado (24 horas)
+- Asegurar formato del encabezado de Autorización: `Bearer <token>`
 
-### Debug Mode
+### Modo de Depuración
 
-Enable debug logging in `.env`:
+Habilitar registro de depuración en `.env`:
 ```
 APP_DEBUG=true
 LOG_LEVEL=debug
 ```
 
-Check logs in: `storage/logs/laravel.log`
+Verificar registros en: `storage/logs/laravel.log`
 
 ---
 
-## Changelog
+## Historial de Cambios
 
-### Version 1.0.0 (Initial Release)
+### Versión 1.0.0 (Lanzamiento Inicial)
 
-- GraphQL API for authentication
-- Role-based access control
-- Token-based API authentication
-- User management
-- Role and permission management
-- WhatsApp phone-based auto-registration
+- API GraphQL para autenticación
+- Control de acceso basado en roles
+- Autenticación de API basada en tokens
+- Gestión de usuarios
+- Gestión de roles y permisos
+- Auto-registro basado en número de teléfono WhatsApp
 
 ---
 
-## License
+## Licencia
 
-This microservice is part of the ambulance dispatch system project.
+Este microservicio es parte del proyecto del sistema de despacho de ambulancias.

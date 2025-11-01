@@ -16,6 +16,13 @@ class User extends Authenticatable
     use HasFactory, Notifiable, TwoFactorAuthenticatable, HasApiTokens, HasRoles;
 
     /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -59,8 +66,15 @@ class User extends Authenticatable
      */
     public function getAllPermissions()
     {
-        return $this->permissions()
-            ->union($this->roles()->with('permissions')->get()->pluck('permissions')->flatten())
+        // Get direct permissions
+        $directPermissions = $this->permissions()->get();
+
+        // Get permissions through roles
+        $rolePermissions = $this->roles()->with('permissions')->get()->pluck('permissions')->flatten();
+
+        // Combine and unique
+        return collect([$directPermissions, $rolePermissions])
+            ->flatten()
             ->unique('id')
             ->values();
     }

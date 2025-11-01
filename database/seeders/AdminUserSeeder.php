@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AdminUserSeeder extends Seeder
 {
@@ -30,7 +31,6 @@ class AdminUserSeeder extends Seeder
                 'phone' => '+34600000000',
                 'password' => Hash::make('admin@123456'), // ⚠️ CAMBIAR EN PRODUCCIÓN
                 'status' => 'active',
-                'email_verified_at' => now(),
             ]);
 
             // Asignar rol admin
@@ -49,6 +49,7 @@ class AdminUserSeeder extends Seeder
 
         } catch (\Exception $e) {
             $this->command->error('Error creating admin user: ' . $e->getMessage());
+            $this->command->line('Exception: ' . $e->getMessage());
         }
     }
 
@@ -92,7 +93,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'System n8n',
                 'email' => 'system@ambulancia.local',
                 'phone' => '+34612345682',
-                'password' => Hash::make(str_random(32)), // Contraseña aleatoria para sistema
+                'password' => null, // Contraseña aleatoria para sistema
                 'role' => 'system',
             ],
         ];
@@ -104,13 +105,15 @@ class AdminUserSeeder extends Seeder
                     continue;
                 }
 
+                // Para el usuario system, usar contraseña aleatoria
+                $password = isset($userData['password']) && $userData['password'] ? $userData['password'] : Str::random(32);
+
                 $user = User::create([
                     'name' => $userData['name'],
                     'email' => $userData['email'],
                     'phone' => $userData['phone'],
-                    'password' => Hash::make($userData['password']),
+                    'password' => Hash::make($password),
                     'status' => 'active',
-                    'email_verified_at' => now(),
                 ]);
 
                 // Asignar rol
@@ -123,10 +126,11 @@ class AdminUserSeeder extends Seeder
         }
 
         $this->command->info('');
-        $this->command->info('Test User Credentials:');
+        $this->command->info('✅ Test User Credentials:');
         $this->command->line('  Paramedic: paramedic@ambulancia.local / paramedic@123456');
         $this->command->line('  Dispatcher: dispatcher@ambulancia.local / dispatcher@123456');
         $this->command->line('  Hospital: hospital@ambulancia.local / hospital@123456');
         $this->command->line('  Doctor: doctor@ambulancia.local / doctor@123456');
+        $this->command->line('  System: system@ambulancia.local / (random password)');
     }
 }

@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(php artisan:*)",
-      "Bash(composer require:*)"
+      "Bash(composer require:*)",
+      "Bash(del \"D:\\SWII\\micro_servicios\\ms_autentificacion\\database\\migrations\\2025_10_25_160023_fix_personal_access_tokens_datetime_columns.php\" \"D:\\SWII\\micro_servicios\\ms_autentificacion\\database\\migrations\\2025_10_25_160325_fix_timestamp_columns_to_datetime.php\" \"D:\\SWII\\micro_servicios\\ms_autentificacion\\database\\migrations\\2025_10_25_160454_change_datetime_to_datetime2_columns.php\")",
+      "Bash(curl:*)",
+      "Bash(php -r:*)"
     ],
     "deny": [],
     "ask": []
