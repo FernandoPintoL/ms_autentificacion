@@ -1,31 +1,38 @@
+"""
+Apollo Federation v2 Schema Configuration
+This schema participates in Apollo Federation as a subgraph
+"""
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0")
+
 "A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
 scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
 
 "Indicates what fields are available at the top level of a query operation."
 type Query {
     "Get current authenticated user"
-    me: User @auth @field(resolver: "App\\GraphQL\\Resolvers\\AuthResolver@me")
+    me: User @field(resolver: "App\\GraphQL\\Resolvers\\AuthResolver@me")
 
     "Validate authentication token"
     validateToken(token: String!): ValidationResponse! @field(resolver: "App\\GraphQL\\Resolvers\\AuthResolver@validateToken")
 
     "Find a single user by ID"
-    user(id: ID! @rules(apply: ["required"])): User @auth @field(resolver: "App\\GraphQL\\Resolvers\\AuthResolver@user")
+    user(id: ID! @rules(apply: ["required"])): User @field(resolver: "App\\GraphQL\\Resolvers\\AuthResolver@user")
 
     "List all users with pagination"
     users(
         first: Int = 10
         page: Int = 1
-    ): UserPagination! @auth @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@users")
+    ): UserPagination! @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@users")
 
     "Get all roles"
-    roles: [Role!]! @auth @field(resolver: "App\\GraphQL\\Resolvers\\RolePermissionResolver@roles")
+    roles: [Role!]! @field(resolver: "App\\GraphQL\\Resolvers\\RolePermissionResolver@roles")
 
     "Get all permissions"
-    permissions: [Permission!]! @auth @field(resolver: "App\\GraphQL\\Resolvers\\RolePermissionResolver@permissions")
+    permissions: [Permission!]! @field(resolver: "App\\GraphQL\\Resolvers\\RolePermissionResolver@permissions")
 
     "Get user permissions"
-    userPermissions: [Permission!]! @auth @field(resolver: "App\\GraphQL\\Resolvers\\RolePermissionResolver@userPermissions")
+    userPermissions: [Permission!]! @field(resolver: "App\\GraphQL\\Resolvers\\RolePermissionResolver@userPermissions")
 }
 
 "Mutations for authentication and user management"
@@ -37,7 +44,7 @@ type Mutation {
     loginWhatsApp(phone: String! @rules(apply: ["required"])): AuthResponse! @field(resolver: "App\\GraphQL\\Resolvers\\AuthResolver@loginWhatsApp")
 
     "User logout - revokes token"
-    logout: LogoutResponse! @auth @field(resolver: "App\\GraphQL\\Resolvers\\AuthResolver@logout")
+    logout: LogoutResponse! @field(resolver: "App\\GraphQL\\Resolvers\\AuthResolver@logout")
 
     "Refresh authentication token"
     refreshToken(token: String!): AuthResponse! @field(resolver: "App\\GraphQL\\Resolvers\\AuthResolver@refreshToken")
@@ -48,9 +55,8 @@ type Mutation {
         phone: String @rules(apply: ["unique:users"])
         name: String! @rules(apply: ["required", "string", "max:255"])
         password: String! @rules(apply: ["required", "min:8"])
-        password_confirmation: String!
-        roles: [String!]
-    ): UserResponse! @auth @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@createUser")
+        roleId: ID!
+    ): UserResponse! @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@createUser")
 
     "Update user data"
     updateUser(
@@ -58,20 +64,20 @@ type Mutation {
         name: String
         phone: String
         email: String @rules(apply: ["email", "unique:users,email,{id}"])
-    ): UserResponse! @auth @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@updateUser")
+    ): UserResponse! @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@updateUser")
 
     "Delete a user"
-    deleteUser(id: ID! @rules(apply: ["required"])): DeleteResponse! @auth @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@deleteUser")
+    deleteUser(id: ID! @rules(apply: ["required"])): DeleteResponse! @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@deleteUser")
 
     "Assign role to user"
-    assignRoleToUser(userId: ID!, roleId: ID!): UserResponse! @auth @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@assignRoleToUser")
+    assignRoleToUser(userId: ID!, roleId: ID!): UserResponse! @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@assignRoleToUser")
 
     "Remove role from user"
-    removeRoleFromUser(userId: ID!, roleId: ID!): UserResponse! @auth @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@removeRoleFromUser")
+    removeRoleFromUser(userId: ID!, roleId: ID!): UserResponse! @field(resolver: "App\\GraphQL\\Resolvers\\UserResolver@removeRoleFromUser")
 }
 
-"User account type"
-type User {
+"User account type - Primary entity in authentication service"
+type User @key(fields: "id") {
     "Unique primary key"
     id: ID!
 
@@ -94,13 +100,13 @@ type User {
     permissions: [Permission!]!
 
     "When email was verified"
-    email_verified_at: DateTime
+    emailVerifiedAt: DateTime
 
     "When account was created"
-    created_at: DateTime!
+    createdAt: DateTime!
 
     "When account was last updated"
-    updated_at: DateTime!
+    updatedAt: DateTime!
 }
 
 "Paginated user response"
@@ -122,7 +128,7 @@ type PaginatorInfo {
 }
 
 "Role type"
-type Role {
+type Role @key(fields: "id") {
     "Unique role ID"
     id: ID!
 
@@ -136,14 +142,14 @@ type Role {
     permissions: [Permission!]!
 
     "When role was created"
-    created_at: DateTime!
+    createdAt: DateTime!
 
     "When role was last updated"
-    updated_at: DateTime!
+    updatedAt: DateTime!
 }
 
 "Permission type"
-type Permission {
+type Permission @key(fields: "id") {
     "Unique permission ID"
     id: ID!
 
@@ -154,10 +160,10 @@ type Permission {
     description: String
 
     "When permission was created"
-    created_at: DateTime!
+    createdAt: DateTime!
 
     "When permission was last updated"
-    updated_at: DateTime!
+    updatedAt: DateTime!
 }
 
 "Authentication response"

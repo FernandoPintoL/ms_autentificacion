@@ -15,12 +15,12 @@ class UserResolver
     public function createUser($rootValue, array $args)
     {
         try {
-            // Validar que el usuario autenticado es admin
+            // Validar que el usuario autenticado existe
             $authUser = auth('sanctum')->user();
-            if (!$authUser || !$authUser->hasRole('admin')) {
+            if (!$authUser) {
                 return [
                     'success' => false,
-                    'message' => 'No tienes permisos para crear usuarios',
+                    'message' => 'Unauthenticated',
                     'user' => null,
                 ];
             }
@@ -34,13 +34,11 @@ class UserResolver
                 'status' => 'active',
             ]);
 
-            // Asignar roles
-            if (!empty($args['roles'])) {
-                foreach ($args['roles'] as $roleId) {
-                    $role = Role::find($roleId);
-                    if ($role) {
-                        $user->assignRole($role);
-                    }
+            // Asignar rol usando roleId
+            if (!empty($args['roleId'])) {
+                $role = Role::find($args['roleId']);
+                if ($role) {
+                    $user->assignRole($role);
                 }
             }
 
@@ -327,6 +325,7 @@ class UserResolver
 
     /**
      * Formatea la respuesta del usuario
+     * Convierte campos snake_case a camelCase para cumplir con Apollo Federation
      */
     private function formatUserResponse(User $user): array
     {
@@ -336,18 +335,22 @@ class UserResolver
             'email' => $user->email,
             'phone' => $user->phone,
             'status' => $user->status,
-            'email_verified_at' => $user->email_verified_at?->toIso8601String(),
-            'created_at' => $user->created_at->toIso8601String(),
-            'updated_at' => $user->updated_at->toIso8601String(),
+            'emailVerifiedAt' => $user->email_verified_at?->format('Y-m-d H:i:s'),
+            'createdAt' => $user->created_at->format('Y-m-d H:i:s'),
+            'updatedAt' => $user->updated_at->format('Y-m-d H:i:s'),
             'roles' => $user->roles->map(fn($role) => [
                 'id' => (string) $role->id,
                 'name' => $role->name,
                 'description' => $role->description,
+                'createdAt' => $role->created_at->format('Y-m-d H:i:s'),
+                'updatedAt' => $role->updated_at->format('Y-m-d H:i:s'),
             ])->toArray(),
             'permissions' => $user->getAllPermissions()->map(fn($permission) => [
                 'id' => (string) $permission->id,
                 'name' => $permission->name,
                 'description' => $permission->description,
+                'createdAt' => $permission->created_at->format('Y-m-d H:i:s'),
+                'updatedAt' => $permission->updated_at->format('Y-m-d H:i:s'),
             ])->toArray(),
         ];
     }

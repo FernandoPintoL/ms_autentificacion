@@ -12,6 +12,12 @@ class RolePermissionResolver
      */
     public function roles($rootValue, array $args)
     {
+        // Check authentication
+        $user = auth('sanctum')->user();
+        if (!$user) {
+            throw new \Exception('Unauthenticated');
+        }
+
         $roles = Role::with('permissions')->get();
 
         return $roles->map(function ($role) {
@@ -24,6 +30,12 @@ class RolePermissionResolver
      */
     public function permissions($rootValue, array $args)
     {
+        // Check authentication
+        $user = auth('sanctum')->user();
+        if (!$user) {
+            throw new \Exception('Unauthenticated');
+        }
+
         $permissions = Permission::all();
 
         return $permissions->map(function ($permission) {
@@ -49,6 +61,7 @@ class RolePermissionResolver
 
     /**
      * Formatea la respuesta del rol
+     * Convierte campos snake_case a camelCase para cumplir con Apollo Federation
      */
     private function formatRoleResponse(Role $role): array
     {
@@ -56,8 +69,8 @@ class RolePermissionResolver
             'id' => (string) $role->id,
             'name' => $role->name,
             'description' => $role->description ?? null,
-            'created_at' => $role->created_at->toIso8601String(),
-            'updated_at' => $role->updated_at->toIso8601String(),
+            'createdAt' => $role->created_at->format('Y-m-d H:i:s'),
+            'updatedAt' => $role->updated_at->format('Y-m-d H:i:s'),
             'permissions' => $role->permissions->map(function ($permission) {
                 return $this->formatPermissionResponse($permission);
             })->toArray(),
@@ -66,6 +79,7 @@ class RolePermissionResolver
 
     /**
      * Formatea la respuesta del permiso
+     * Convierte campos snake_case a camelCase para cumplir con Apollo Federation
      */
     private function formatPermissionResponse(Permission $permission): array
     {
@@ -73,8 +87,8 @@ class RolePermissionResolver
             'id' => (string) $permission->id,
             'name' => $permission->name,
             'description' => $permission->description ?? null,
-            'created_at' => $permission->created_at->toIso8601String(),
-            'updated_at' => $permission->updated_at->toIso8601String(),
+            'createdAt' => $permission->created_at->format('Y-m-d H:i:s'),
+            'updatedAt' => $permission->updated_at->format('Y-m-d H:i:s'),
         ];
     }
 }

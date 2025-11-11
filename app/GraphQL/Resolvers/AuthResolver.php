@@ -135,6 +135,7 @@ class AuthResolver
 
     /**
      * Formatea la respuesta del usuario
+     * Convierte campos snake_case a camelCase para cumplir con Apollo Federation
      */
     private function formatUserResponse(User $user): array
     {
@@ -144,18 +145,22 @@ class AuthResolver
             'email' => $user->email,
             'phone' => $user->phone,
             'status' => $user->status,
-            'email_verified_at' => $user->email_verified_at?->toIso8601String(),
-            'created_at' => $user->created_at->toIso8601String(),
-            'updated_at' => $user->updated_at->toIso8601String(),
+            'emailVerifiedAt' => $user->email_verified_at?->format('Y-m-d H:i:s'),
+            'createdAt' => $user->created_at->format('Y-m-d H:i:s'),
+            'updatedAt' => $user->updated_at->format('Y-m-d H:i:s'),
             'roles' => $user->roles->map(fn($role) => [
                 'id' => (string) $role->id,
                 'name' => $role->name,
                 'description' => $role->description,
+                'createdAt' => $role->created_at->format('Y-m-d H:i:s'),
+                'updatedAt' => $role->updated_at->format('Y-m-d H:i:s'),
             ])->toArray(),
             'permissions' => $user->getAllPermissions()->map(fn($permission) => [
                 'id' => (string) $permission->id,
                 'name' => $permission->name,
                 'description' => $permission->description,
+                'createdAt' => $permission->created_at->format('Y-m-d H:i:s'),
+                'updatedAt' => $permission->updated_at->format('Y-m-d H:i:s'),
             ])->toArray(),
         ];
     }
