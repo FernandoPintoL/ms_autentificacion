@@ -112,13 +112,18 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Crear directorios necesarios para supervisor
 RUN mkdir -p /var/log/supervisor
 
+# Instalar gettext para envsubst
+RUN apk add --no-cache gettext
+
 # Crear script de entrada para manejar variables de entorno
-RUN echo '#!/bin/sh\n\
-export PORT=${PORT:-80}\n\
-envsubst < /etc/nginx/nginx.conf > /etc/nginx/nginx.conf.temp\n\
-mv /etc/nginx/nginx.conf.temp /etc/nginx/nginx.conf\n\
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf' > /entrypoint.sh && \
-    chmod +x /entrypoint.sh
+RUN cat > /entrypoint.sh <<'EOF'
+#!/bin/sh
+export PORT=${PORT:-80}
+envsubst < /etc/nginx/nginx.conf > /etc/nginx/nginx.conf.temp
+mv /etc/nginx/nginx.conf.temp /etc/nginx/nginx.conf
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+EOF
+RUN chmod +x /entrypoint.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
