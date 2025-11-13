@@ -120,13 +120,9 @@ RUN mkdir -p storage/logs bootstrap/cache && \
     touch /app/bootstrap/cache/.gitkeep && \
     touch /app/storage/logs/.gitkeep
 
-# Copiar .env para production si existe, sino usar .env.example
-RUN if [ -f .env.production ]; then \
-        cp .env.production .env; \
-    elif [ -f .env.example ]; then \
-        cp .env.example .env; \
-    fi && \
-    chown www-data:www-data .env
+# Crear archivo .env vacío para que Laravel lo encuentre
+# Las variables de entorno serán inyectadas por Railway en tiempo de ejecución
+RUN touch /app/.env && chmod 644 /app/.env && chown www-data:www-data /app/.env
 
 # Copiar configuración de Nginx
 COPY docker/nginx.conf /etc/nginx/nginx.conf
@@ -140,35 +136,50 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Crear directorios necesarios para supervisor y nginx
 RUN mkdir -p /var/log/supervisor /var/log/nginx /var/run/nginx
 
-# Crear script de entrada que genera APP_KEY e inicializa la BD
+# Crear script de entrada que inicializa la BD y cachés
 RUN cat > /entrypoint.sh <<'EOF'
 #!/bin/sh
 
 echo "=== Iniciando aplicación Laravel ==="
 
-# Si APP_KEY no está definida en el .env, generarla
-if ! grep -q "^APP_KEY=" /app/.env; then
-    echo "[1/5] Generando APP_KEY..."
+# Esperar a que la base de datos esté lista (máximo 30 segundos)
+if [ -n "$DB_HOST" ]; then
+    echo "[1/6] Esperando a que la base de datos esté disponible..."
+    max_attempts=30
+    attempt=0
+    while [ $attempt -lt $max_attempts ]; do
+        if php -r "new PDO('sqlsrv:Server=$DB_HOST,$DB_PORT', '$DB_USERNAME', '$DB_PASSWORD');" 2>/dev/null; then
+            echo "Base de datos lista"
+            break
+        fi
+        attempt=$((attempt + 1))
+        sleep 1
+    done
+fi
+
+# Generar APP_KEY si no existe
+if [ -z "$APP_KEY" ]; then
+    echo "[2/6] Generando APP_KEY..."
     APP_KEY=$(php -r "echo 'base64:' . base64_encode(random_bytes(32));")
-    echo "APP_KEY=$APP_KEY" >> /app/.env
+    export APP_KEY
 else
-    echo "[1/5] APP_KEY ya existe"
+    echo "[2/6] APP_KEY ya está configurada"
 fi
 
 # Generar config cache
-echo "[2/5] Generando config cache..."
+echo "[3/6] Generando config cache..."
 php /app/artisan config:cache 2>/dev/null || true
 
 # Ejecutar migraciones
-echo "[3/5] Ejecutando migraciones..."
+echo "[4/6] Ejecutando migraciones..."
 php /app/artisan migrate --force 2>/dev/null || echo "Migraciones completadas o fallos ignorados"
 
 # Generar route cache
-echo "[4/5] Generando route cache..."
+echo "[5/6] Generando route cache..."
 php /app/artisan route:cache 2>/dev/null || true
 
 # Generar view cache
-echo "[5/5] Generando view cache..."
+echo "[6/6] Generando view cache..."
 php /app/artisan view:cache 2>/dev/null || true
 
 echo "=== Aplicación lista, iniciando Supervisord ==="
