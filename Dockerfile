@@ -101,18 +101,26 @@ RUN apk add --no-cache --virtual .build-deps \
     zip \
     dom \
     xml \
+    iconv \
+    intl && \
+    apk del .build-deps
+
+# Las siguientes extensiones están compiladas en PHP 8.3 por defecto
+RUN docker-php-ext-enable \
     json \
     openssl \
     filter \
     hash \
     tokenizer \
     session \
-    iconv \
-    curl \
-    intl && \
+    curl || true
+
+# Instalar redis desde PECL
+RUN apk add --no-cache --virtual .redis-deps \
+    build-base && \
     pecl install redis && \
     docker-php-ext-enable redis && \
-    apk del .build-deps
+    apk del .redis-deps
 
 # Configuración PHP
 RUN echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/00-app.ini && \
