@@ -15,17 +15,18 @@ RUN apk add --no-cache \
     git \
     composer \
     freetds-dev \
+    postgresql-dev \
     oniguruma-dev \
     libzip-dev \
     libxml2-dev \
     icu-dev \
     openssl-dev
 
-# Instalar extensiones PHP (sin zip, intl ni pdo_pgsql que necesitan libzip/postgresql-dev)
+# Instalar extensiones PHP
 # Nota: iconv está compilado en PHP 8.3 y se habilitará en docker-php-ext-enable
 RUN docker-php-ext-install \
     pdo \
-    pdo_dblib \
+    pdo_pgsql \
     mbstring \
     bcmath \
     ctype \
@@ -64,7 +65,7 @@ ARG APP_ENV=production
 
 # Instalar solo las librerías runtime necesarias
 RUN apk add --no-cache \
-    freetds \
+    postgresql-libs \
     oniguruma \
     libzip \
     libxml2 \
@@ -75,7 +76,7 @@ RUN apk add --no-cache \
 # Instalar solo las librerías de desarrollo necesarias (temporal para habilitar extensiones)
 RUN apk add --no-cache --virtual .build-deps \
     build-base \
-    freetds-dev \
+    postgresql-dev \
     oniguruma-dev \
     libzip-dev \
     libxml2-dev \
@@ -84,7 +85,7 @@ RUN apk add --no-cache --virtual .build-deps \
     # Instalar extensiones
     docker-php-ext-install \
     pdo \
-    pdo_dblib \
+    pdo_pgsql \
     mbstring \
     bcmath \
     ctype \
@@ -95,7 +96,7 @@ RUN apk add --no-cache --virtual .build-deps \
     xml \
     intl && \
     # Habilitar extensiones compiladas
-    docker-php-ext-enable pdo pdo_dblib mbstring bcmath ctype fileinfo pcntl zip dom xml intl && \
+    docker-php-ext-enable pdo pdo_pgsql mbstring bcmath ctype fileinfo pcntl zip dom xml intl && \
     # json, openssl, filter, hash, tokenizer son built-in en PHP 8.3 - no es necesario habilitarlos explícitamente
     # Limpiar dependencias de compilación
     apk del .build-deps
@@ -150,7 +151,7 @@ if [ -n "$DB_HOST" ]; then
     max_attempts=30
     attempt=0
     while [ $attempt -lt $max_attempts ]; do
-        if php -r "new PDO('sqlsrv:Server=$DB_HOST,$DB_PORT', '$DB_USERNAME', '$DB_PASSWORD');" 2>/dev/null; then
+        if php -r "new PDO('pgsql:host=$DB_HOST;port=$DB_PORT;dbname=$DB_DATABASE', '$DB_USERNAME', '$DB_PASSWORD');" 2>/dev/null; then
             echo "Base de datos lista"
             break
         fi
