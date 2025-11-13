@@ -202,6 +202,8 @@ echo "PHP PDO drivers: $(php -r 'echo implode(", ", PDO::getAvailableDrivers());
 php -m | grep -E "pgsql|pdo" || echo "PostgreSQL extensions: NOT FOUND"
 echo "Nginx config test:"
 nginx -t 2>&1 || true
+echo "Listening ports:"
+netstat -tlnp 2>/dev/null | grep -E "LISTEN|PID" || echo "netstat not available"
 echo ""
 
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
