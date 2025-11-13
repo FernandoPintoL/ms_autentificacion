@@ -21,7 +21,7 @@ RUN apk add --no-cache \
     icu-dev \
     openssl-dev
 
-# Instalar extensiones PHP (sin zip ni intl que necesitan libzip)
+# Instalar extensiones PHP (sin zip, intl ni pdo_pgsql que necesitan libzip/postgresql-dev)
 # Nota: iconv está compilado en PHP 8.3 y se habilitará en docker-php-ext-enable
 RUN docker-php-ext-install \
     pdo \
@@ -101,7 +101,7 @@ RUN apk add --no-cache --virtual .build-deps \
 # TODO: Instalar redis desde PECL (requiere compilación de phpize)
 # Será instalado en una stage separada cuando sea necesario
 
-# Habilitar extensiones PDO (pdo y pdo_dblib ya fueron compiladas en Stage 1)
+# Habilitar extensiones PDO (pdo y pdo_dblib compiladas en Stage 1)
 RUN docker-php-ext-enable pdo pdo_dblib
 
 # Configuración PHP
