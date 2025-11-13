@@ -101,8 +101,8 @@ RUN mkdir -p storage/logs bootstrap/cache && \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD php -r "exit(file_exists('bootstrap/cache/config.php') ? 0 : 1);"
 
-# Cambiar usuario para mayor seguridad
-USER www-data
+# NO cambiar usuario aquí - dejar que PHP-FPM maneje la seguridad
+# USER www-data  <- Comentado para permitir que PHP-FPM corra como root
 
 # Exponer puerto FPM
 EXPOSE 9000
