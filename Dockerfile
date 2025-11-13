@@ -110,9 +110,7 @@ COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Crear directorios necesarios para supervisor y nginx
-RUN mkdir -p /var/log/supervisor /var/log/nginx /var/run/nginx && \
-    touch /var/log/php-fpm-error.log /var/log/php-fpm-access.log && \
-    chown -R www-data:www-data /var/log/php-fpm-error.log /var/log/php-fpm-access.log
+RUN mkdir -p /var/log/supervisor /var/log/nginx /var/run/nginx
 
 # Crear script de entrada
 RUN cat > /entrypoint.sh <<'EOF'
