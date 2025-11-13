@@ -189,6 +189,16 @@ php /app/artisan view:cache 2>/dev/null || true
 
 echo "=== Aplicación lista, iniciando Supervisord ==="
 
+# Diagnostico antes de iniciar supervisord
+echo ""
+echo "=== Diagnostico del Sistema ==="
+echo "PHP version: $(php -v | head -1)"
+echo "PHP PDO drivers: $(php -r 'echo implode(", ", PDO::getAvailableDrivers());')"
+php -m | grep -E "pgsql|pdo" || echo "PostgreSQL extensions: NOT FOUND"
+echo "Nginx config test:"
+nginx -t 2>&1 || true
+echo ""
+
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 EOF
 RUN chmod +x /entrypoint.sh
