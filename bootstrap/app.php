@@ -15,6 +15,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Trust proxies from Railway and load balancers
+        $middleware->trustProxies(at: [
+            '0.0.0.0/0',
+        ], headers: [
+            'FORWARDED',
+            'X-FORWARDED-FOR',
+            'X-FORWARDED-HOST',
+            'X-FORWARDED_PROTO',
+            'X-FORWARDED-PORT',
+        ]);
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         // Add CORS middleware to all routes
