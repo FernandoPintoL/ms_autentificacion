@@ -21,7 +21,8 @@ RUN apk add --no-cache \
     icu-dev \
     openssl-dev
 
-# Instalar extensiones PHP
+# Instalar extensiones PHP (sin zip ni intl que necesitan libzip)
+# Nota: iconv está compilado en PHP 8.3 y se habilitará en docker-php-ext-enable
 RUN docker-php-ext-install \
     pdo \
     pdo_dblib \
@@ -30,18 +31,8 @@ RUN docker-php-ext-install \
     ctype \
     fileinfo \
     pcntl \
-    zip \
     dom \
-    xml \
-    json \
-    openssl \
-    filter \
-    hash \
-    tokenizer \
-    session \
-    iconv \
-    curl \
-    intl
+    xml
 
 # Verificar que todas las extensiones están cargadas
 RUN php -m | grep -E 'dom|tokenizer|session' || echo "Extensions missing" && \
@@ -82,12 +73,14 @@ RUN apk add --no-cache \
     supervisor
 
 # Instalar extensiones PHP
+# Nota: iconv está compilado en PHP 8.3 y se habilitará en docker-php-ext-enable
 RUN apk add --no-cache --virtual .build-deps \
     build-base \
     freetds-dev \
     oniguruma-dev \
-    unixodbc-dev \
+    libzip-dev \
     libxml2-dev \
+    unixodbc-dev \
     icu-dev \
     openssl-dev && \
     docker-php-ext-install \
@@ -101,26 +94,12 @@ RUN apk add --no-cache --virtual .build-deps \
     zip \
     dom \
     xml \
-    iconv \
     intl && \
+    (docker-php-ext-enable json openssl filter hash tokenizer session iconv curl || true) && \
     apk del .build-deps
 
-# Las siguientes extensiones están compiladas en PHP 8.3 por defecto
-RUN docker-php-ext-enable \
-    json \
-    openssl \
-    filter \
-    hash \
-    tokenizer \
-    session \
-    curl || true
-
-# Instalar redis desde PECL
-RUN apk add --no-cache --virtual .redis-deps \
-    build-base && \
-    pecl install redis && \
-    docker-php-ext-enable redis && \
-    apk del .redis-deps
+# TODO: Instalar redis desde PECL (requiere compilación de phpize)
+# Será instalado en una stage separada cuando sea necesario
 
 # Configuración PHP
 RUN echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/00-app.ini && \
