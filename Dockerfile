@@ -117,11 +117,15 @@ WORKDIR /app
 # Instalar Nginx
 RUN apk add --no-cache nginx
 
-# Crear directorios necesarios
+# Crear directorios necesarios y establecer permisos
 RUN mkdir -p storage/logs bootstrap/cache && \
-    chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/storage/logs && \
+    chown -R www-data:www-data /app && \
+    chmod -R 755 /app/public && \
+    chmod -R 755 /app/bootstrap && \
+    chmod -R 755 /app/storage && \
     touch /app/bootstrap/cache/.gitkeep && \
-    touch /app/storage/logs/.gitkeep
+    touch /app/storage/logs/.gitkeep && \
+    chown www-data:www-data /app/bootstrap/cache/.gitkeep /app/storage/logs/.gitkeep
 
 # Crear archivo .env vacío para que Laravel lo encuentre
 # Las variables de entorno serán inyectadas por Railway en tiempo de ejecución
