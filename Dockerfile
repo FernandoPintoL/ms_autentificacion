@@ -109,18 +109,14 @@ COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 # Copiar configuración de Supervisord
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Crear directorios necesarios para supervisor
-RUN mkdir -p /var/log/supervisor
+# Crear directorios necesarios para supervisor y nginx
+RUN mkdir -p /var/log/supervisor /var/log/nginx /var/run/nginx && \
+    touch /var/log/php-fpm-error.log /var/log/php-fpm-access.log && \
+    chown -R www-data:www-data /var/log/php-fpm-error.log /var/log/php-fpm-access.log
 
-# Instalar gettext para envsubst
-RUN apk add --no-cache gettext
-
-# Crear script de entrada para manejar variables de entorno
+# Crear script de entrada
 RUN cat > /entrypoint.sh <<'EOF'
 #!/bin/sh
-export PORT=${PORT:-80}
-envsubst < /etc/nginx/nginx.conf > /etc/nginx/nginx.conf.temp
-mv /etc/nginx/nginx.conf.temp /etc/nginx/nginx.conf
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 EOF
 RUN chmod +x /entrypoint.sh
