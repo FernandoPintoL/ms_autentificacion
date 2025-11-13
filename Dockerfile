@@ -141,9 +141,10 @@ COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Crear directorios necesarios para supervisor y nginx
-RUN mkdir -p /var/log/supervisor /var/log/nginx /var/run/nginx && \
-    chown -R www-data:www-data /var/log/nginx /var/run/nginx && \
-    chmod 755 /var/log/nginx /var/run/nginx
+RUN mkdir -p /var/log/supervisor /var/log/nginx /var/run/nginx /tmp/nginx && \
+    mkdir -p /tmp/nginx/client_body /tmp/nginx/proxy /tmp/nginx/fastcgi /tmp/nginx/uwsgi /tmp/nginx/scgi && \
+    chown -R www-data:www-data /var/log/nginx /var/run/nginx /tmp/nginx && \
+    chmod -R 755 /var/log/nginx /var/run/nginx /tmp/nginx
 
 # Crear script de entrada que inicializa la BD y cachés
 RUN cat > /entrypoint.sh <<'EOF'
