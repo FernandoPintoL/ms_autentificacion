@@ -98,7 +98,9 @@ RUN apk add --no-cache nginx
 
 # Crear directorios necesarios
 RUN mkdir -p storage/logs bootstrap/cache && \
-    chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/storage/logs
+    chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/storage/logs && \
+    touch /app/bootstrap/cache/.gitkeep && \
+    touch /app/storage/logs/.gitkeep
 
 # Copiar configuración de Nginx
 COPY docker/nginx.conf /etc/nginx/nginx.conf
