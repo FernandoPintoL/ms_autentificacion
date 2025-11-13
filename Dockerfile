@@ -16,13 +16,14 @@ RUN apk add --no-cache \
     composer \
     freetds-dev \
     oniguruma-dev \
-    libzip-dev
-
-# Instalar dependencias para extensiones XML
-RUN apk add --no-cache libxml2-dev
+    libzip-dev \
+    libxml2-dev \
+    icu-dev \
+    openssl-dev
 
 # Instalar extensiones PHP
 RUN docker-php-ext-install \
+    pdo \
     pdo_dblib \
     mbstring \
     bcmath \
@@ -31,7 +32,16 @@ RUN docker-php-ext-install \
     pcntl \
     zip \
     dom \
-    xml
+    xml \
+    json \
+    openssl \
+    filter \
+    hash \
+    tokenizer \
+    session \
+    iconv \
+    curl \
+    intl
 
 # Verificar que todas las extensiones están cargadas
 RUN php -m | grep -E 'dom|tokenizer|session' || echo "Extensions missing" && \
@@ -65,6 +75,9 @@ ARG APP_ENV=production
 RUN apk add --no-cache \
     freetds \
     oniguruma \
+    libzip \
+    libxml2 \
+    icu-libs \
     curl \
     supervisor
 
@@ -73,14 +86,32 @@ RUN apk add --no-cache --virtual .build-deps \
     build-base \
     freetds-dev \
     oniguruma-dev \
-    unixodbc-dev && \
+    unixodbc-dev \
+    libxml2-dev \
+    icu-dev \
+    openssl-dev && \
     docker-php-ext-install \
+    pdo \
     pdo_dblib \
     mbstring \
     bcmath \
     ctype \
     fileinfo \
-    pcntl && \
+    pcntl \
+    zip \
+    dom \
+    xml \
+    json \
+    openssl \
+    filter \
+    hash \
+    tokenizer \
+    session \
+    iconv \
+    curl \
+    intl && \
+    pecl install redis && \
+    docker-php-ext-enable redis && \
     apk del .build-deps
 
 # Configuración PHP
@@ -102,6 +133,14 @@ RUN mkdir -p storage/logs bootstrap/cache && \
     touch /app/bootstrap/cache/.gitkeep && \
     touch /app/storage/logs/.gitkeep
 
+# Copiar .env para production si existe, sino usar .env.example
+RUN if [ -f .env.production ]; then \
+        cp .env.production .env; \
+    elif [ -f .env.example ]; then \
+        cp .env.example .env; \
+    fi && \
+    chown www-data:www-data .env
+
 # Copiar configuración de Nginx
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 
@@ -114,9 +153,39 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Crear directorios necesarios para supervisor y nginx
 RUN mkdir -p /var/log/supervisor /var/log/nginx /var/run/nginx
 
-# Crear script de entrada
+# Crear script de entrada que genera APP_KEY e inicializa la BD
 RUN cat > /entrypoint.sh <<'EOF'
 #!/bin/sh
+
+echo "=== Iniciando aplicación Laravel ==="
+
+# Si APP_KEY no está definida en el .env, generarla
+if ! grep -q "^APP_KEY=" /app/.env; then
+    echo "[1/5] Generando APP_KEY..."
+    APP_KEY=$(php -r "echo 'base64:' . base64_encode(random_bytes(32));")
+    echo "APP_KEY=$APP_KEY" >> /app/.env
+else
+    echo "[1/5] APP_KEY ya existe"
+fi
+
+# Generar config cache
+echo "[2/5] Generando config cache..."
+php /app/artisan config:cache 2>/dev/null || true
+
+# Ejecutar migraciones
+echo "[3/5] Ejecutando migraciones..."
+php /app/artisan migrate --force 2>/dev/null || echo "Migraciones completadas o fallos ignorados"
+
+# Generar route cache
+echo "[4/5] Generando route cache..."
+php /app/artisan route:cache 2>/dev/null || true
+
+# Generar view cache
+echo "[5/5] Generando view cache..."
+php /app/artisan view:cache 2>/dev/null || true
+
+echo "=== Aplicación lista, iniciando Supervisord ==="
+
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 EOF
 RUN chmod +x /entrypoint.sh
