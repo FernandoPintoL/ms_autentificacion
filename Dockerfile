@@ -93,19 +93,39 @@ RUN echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/00-app.ini && \
 COPY --from=builder /app /app
 WORKDIR /app
 
+# Instalar Nginx
+RUN apk add --no-cache nginx
+
 # Crear directorios necesarios
 RUN mkdir -p storage/logs bootstrap/cache && \
     chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/storage/logs
+
+# Copiar configuración de Nginx
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+
+# Copiar configuración de PHP-FPM
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+
+# Copiar configuración de Supervisord
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Crear directorios necesarios para supervisor
+RUN mkdir -p /var/log/supervisor
+
+# Crear script de entrada para manejar variables de entorno
+RUN echo '#!/bin/sh\n\
+export PORT=${PORT:-80}\n\
+envsubst < /etc/nginx/nginx.conf > /etc/nginx/nginx.conf.temp\n\
+mv /etc/nginx/nginx.conf.temp /etc/nginx/nginx.conf\n\
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf' > /entrypoint.sh && \
+    chmod +x /entrypoint.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD php -r "exit(file_exists('bootstrap/cache/config.php') ? 0 : 1);"
 
-# NO cambiar usuario aquí - dejar que PHP-FPM maneje la seguridad
-# USER www-data  <- Comentado para permitir que PHP-FPM corra como root
+# Exponer puerto HTTP
+EXPOSE 80
 
-# Exponer puerto FPM
-EXPOSE 9000
-
-# Comando por defecto
-CMD ["php-fpm"]
+# Comando por defecto - ejecutar script de entrada
+ENTRYPOINT ["/entrypoint.sh"]

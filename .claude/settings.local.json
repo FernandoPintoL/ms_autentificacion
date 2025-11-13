@@ -11,7 +11,8 @@
       "Bash(docker-compose logs:*)",
       "Bash(docker-compose down:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(ls -la \"D:\\SWII\\micro_servicios\\ms-despacho\\docker\"\" 2>/dev/null || echo \"Directorio no existe \")"
     ],
     "deny": [],
     "ask": []
