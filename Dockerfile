@@ -101,6 +101,9 @@ RUN apk add --no-cache --virtual .build-deps \
 # TODO: Instalar redis desde PECL (requiere compilación de phpize)
 # Será instalado en una stage separada cuando sea necesario
 
+# Habilitar extensiones PDO (pdo y pdo_dblib ya fueron compiladas en Stage 1)
+RUN docker-php-ext-enable pdo pdo_dblib
+
 # Configuración PHP
 RUN echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/00-app.ini && \
     echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/00-app.ini && \
